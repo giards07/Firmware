@@ -575,7 +575,7 @@ PX4FLOW::start()
 	_reports->flush();
 
 	/* schedule a cycle to start things */
-	work_queue(HPWORK, &_work, (worker_t) & PX4FLOW::cycle_trampoline, this, 1);
+	work_queue(HPWORK, &_work, (worker_t)&PX4FLOW::cycle_trampoline, this, 1);
 
 	/* notify about state change */
 	struct subsystem_info_s info = {
@@ -603,7 +603,7 @@ PX4FLOW::stop()
 void
 PX4FLOW::cycle_trampoline(void *arg)
 {
-	PX4FLOW *dev = (PX4FLOW *) arg;
+	PX4FLOW *dev = (PX4FLOW *)arg;
 
 	dev->cycle();
 }
@@ -683,13 +683,13 @@ namespace px4flow
 #endif
 const int ERROR = -1;
 
-PX4FLOW *g_dev;
+PX4FLOW	*g_dev;
 
-void start();
-void stop();
-void test();
-void reset();
-void info();
+void	start();
+void	stop();
+void	test();
+void	reset();
+void	info();
 
 /**
  * Start the driver.
