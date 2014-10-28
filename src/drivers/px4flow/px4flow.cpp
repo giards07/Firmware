@@ -119,11 +119,12 @@ typedef struct i2c_integral_frame {
 	uint32_t time_since_last_sonar_update;
 	uint16_t ground_distance;
 	uint8_t qual;
-}__attribute__((packed));
+} __attribute__((packed));
 struct i2c_integral_frame f_integral;
 
 
-class PX4FLOW: public device::I2C {
+class PX4FLOW: public device::I2C
+{
 public:
 	PX4FLOW(int bus = PX4FLOW_BUS, int address = I2C_FLOW_ADDRESS);
 	virtual ~PX4FLOW();
@@ -144,8 +145,8 @@ protected:
 private:
 
 	work_s _work;
-	RingBuffer *_reports;bool _sensor_ok;
-	int _measure_ticks;bool _collect_phase;
+	RingBuffer *_reports; bool _sensor_ok;
+	int _measure_ticks; bool _collect_phase;
 
 	orb_advert_t _px4flow_topic;
 
@@ -198,12 +199,13 @@ private:
 extern "C" __EXPORT int px4flow_main(int argc, char *argv[]);
 
 PX4FLOW::PX4FLOW(int bus, int address) :
-		I2C("PX4FLOW", PX4FLOW_DEVICE_PATH, bus, address, 400000), //400khz
-		_reports(nullptr), _sensor_ok(false), _measure_ticks(0), _collect_phase(
-				false), _px4flow_topic(-1), _sample_perf(
-				perf_alloc(PC_ELAPSED, "px4flow_read")), _comms_errors(
+	I2C("PX4FLOW", PX4FLOW_DEVICE_PATH, bus, address, 400000), //400khz
+	_reports(nullptr), _sensor_ok(false), _measure_ticks(0), _collect_phase(
+		false), _px4flow_topic(-1), _sample_perf(
+			perf_alloc(PC_ELAPSED, "px4flow_read")), _comms_errors(
 				perf_alloc(PC_COUNT, "px4flow_comms_errors")), _buffer_overflows(
-				perf_alloc(PC_COUNT, "px4flow_buffer_overflows")) {
+					perf_alloc(PC_COUNT, "px4flow_buffer_overflows"))
+{
 	// enable debug() calls
 	_debug_enabled = false;
 
@@ -211,7 +213,8 @@ PX4FLOW::PX4FLOW(int bus, int address) :
 	memset(&_work, 0, sizeof(_work));
 }
 
-PX4FLOW::~PX4FLOW() {
+PX4FLOW::~PX4FLOW()
+{
 	/* make sure we are truly inactive */
 	stop();
 
@@ -221,7 +224,8 @@ PX4FLOW::~PX4FLOW() {
 	}
 }
 
-int PX4FLOW::init() {
+int PX4FLOW::init()
+{
 	int ret = ERROR;
 
 	/* do I2C init (and probe) first */
@@ -248,7 +252,7 @@ int PX4FLOW::init() {
 	ret = OK;
 	/* sensor is ok, but we don't really know if it is within range */
 	_sensor_ok = true;
-	out: return ret;
+out: return ret;
 }
 
 int
@@ -268,11 +272,12 @@ PX4FLOW::probe()
 	return measure();
 }
 
-int PX4FLOW::ioctl(struct file *filp, int cmd, unsigned long arg) {
+int PX4FLOW::ioctl(struct file *filp, int cmd, unsigned long arg)
+{
 	switch (cmd) {
 
 	case SENSORIOCSPOLLRATE: {
-		switch (arg) {
+			switch (arg) {
 
 			/* switching to manual polling */
 			case SENSOR_POLLRATE_MANUAL:
@@ -293,42 +298,42 @@ int PX4FLOW::ioctl(struct file *filp, int cmd, unsigned long arg) {
 					/* do we need to start internal polling? */
 					bool want_start = (_measure_ticks == 0);
 
-			/* set interval for next measurement to minimum legal value */
-			_measure_ticks = USEC2TICK(PX4FLOW_CONVERSION_INTERVAL);
+					/* set interval for next measurement to minimum legal value */
+					_measure_ticks = USEC2TICK(PX4FLOW_CONVERSION_INTERVAL);
 
 					/* if we need to start the poll state machine, do it */
 					if (want_start) {
 						start();
 					}
 
-			return OK;
-		}
+					return OK;
+				}
 
 			/* adjust to a legal polling interval in Hz */
 			default: {
 					/* do we need to start internal polling? */
 					bool want_start = (_measure_ticks == 0);
 
-			/* convert hz to tick interval via microseconds */
-			unsigned ticks = USEC2TICK(1000000 / arg);
+					/* convert hz to tick interval via microseconds */
+					unsigned ticks = USEC2TICK(1000000 / arg);
 
 					/* check against maximum rate */
 					if (ticks < USEC2TICK(PX4FLOW_CONVERSION_INTERVAL)) {
 						return -EINVAL;
 					}
 
-			/* update interval for next measurement */
-			_measure_ticks = ticks;
+					/* update interval for next measurement */
+					_measure_ticks = ticks;
 
 					/* if we need to start the poll state machine, do it */
 					if (want_start) {
 						start();
 					}
 
-			return OK;
+					return OK;
+				}
+			}
 		}
-		}
-	}
 
 	case SENSORIOCGPOLLRATE:
 		if (_measure_ticks == 0) {
@@ -368,10 +373,11 @@ int PX4FLOW::ioctl(struct file *filp, int cmd, unsigned long arg) {
 	}
 }
 
-ssize_t PX4FLOW::read(struct file *filp, char *buffer, size_t buflen) {
+ssize_t PX4FLOW::read(struct file *filp, char *buffer, size_t buflen)
+{
 	unsigned count = buflen / sizeof(struct optical_flow_s);
 	struct optical_flow_s *rbuf =
-			reinterpret_cast<struct optical_flow_s *>(buffer);
+		reinterpret_cast<struct optical_flow_s *>(buffer);
 	int ret = 0;
 
 	/* buffer must be large enough */
@@ -430,7 +436,8 @@ ssize_t PX4FLOW::read(struct file *filp, char *buffer, size_t buflen) {
 	return ret;
 }
 
-int PX4FLOW::measure() {
+int PX4FLOW::measure()
+{
 	int ret;
 
 	/*
@@ -449,7 +456,8 @@ int PX4FLOW::measure() {
 	return ret;
 }
 
-int PX4FLOW::collect() {
+int PX4FLOW::collect()
+{
 	int ret = -EIO;
 
 	/* read from the sensor */
@@ -457,10 +465,11 @@ int PX4FLOW::collect() {
 
 	perf_begin(_sample_perf);
 
-	if(PX4FLOW_REG==0x00){
+	if (PX4FLOW_REG == 0x00) {
 		ret = transfer(nullptr, 0, &val[0], 45); //read 45 bytes (22+23 : frame1 + frame2)
 	}
-	if(PX4FLOW_REG==0x16){
+
+	if (PX4FLOW_REG == 0x16) {
 		ret = transfer(nullptr, 0, &val[0], 23); //read 23 bytes (only frame2)
 	}
 
@@ -492,42 +501,56 @@ int PX4FLOW::collect() {
 		f_integral.gyro_y_rate_integral = val[31] << 8 | val[30];
 		f_integral.gyro_z_rate_integral = val[33] << 8 | val[32];
 		f_integral.integration_timespan = val[37] << 24 | val[36] << 16
-				| val[35] << 8 | val[34];
+						  | val[35] << 8 | val[34];
 		f_integral.time_since_last_sonar_update = val[41] << 24 | val[40] << 16
 				| val[39] << 8 | val[38];
 		f_integral.ground_distance = val[43] << 8 | val[42];
 		f_integral.qual = val[44];
 	}
-	if(PX4FLOW_REG==0x16){
+
+	if (PX4FLOW_REG == 0x16) {
 		f_integral.frame_count_since_last_readout = val[1] << 8 | val[0];
-		f_integral.pixel_flow_x_integral =val[3] << 8 | val[2];
-		f_integral.pixel_flow_y_integral =val[5] << 8 | val[4];
-		f_integral.gyro_x_rate_integral =val[7] << 8 | val[6];
-		f_integral.gyro_y_rate_integral =val[9] << 8 | val[8];
-		f_integral.gyro_z_rate_integral =val[11] << 8 | val[10];
-		f_integral.integration_timespan = val[15] <<24 |val[14] << 16 |val[13] << 8 |val[12];
-		f_integral.time_since_last_sonar_update = val[19] <<24 |val[18] << 16 |val[17] << 8 |val[16];
-		f_integral.ground_distance =val[21] <<8 |val[20];
-		f_integral.qual =val[22];
+		f_integral.pixel_flow_x_integral = val[3] << 8 | val[2];
+		f_integral.pixel_flow_y_integral = val[5] << 8 | val[4];
+		f_integral.gyro_x_rate_integral = val[7] << 8 | val[6];
+		f_integral.gyro_y_rate_integral = val[9] << 8 | val[8];
+		f_integral.gyro_z_rate_integral = val[11] << 8 | val[10];
+		f_integral.integration_timespan = val[15] << 24 | val[14] << 16 | val[13] << 8 | val[12];
+		f_integral.time_since_last_sonar_update = val[19] << 24 | val[18] << 16 | val[17] << 8 | val[16];
+		f_integral.ground_distance = val[21] << 8 | val[20];
+		f_integral.qual = val[22];
 	}
 
 
 	struct optical_flow_s report;
+
 	report.timestamp = hrt_absolute_time();
+
 	report.pixel_flow_x_integral = float(f_integral.pixel_flow_x_integral) / 10000.0f;//convert to radians
+
 	report.pixel_flow_y_integral = float(f_integral.pixel_flow_y_integral) / 10000.0f;//convert to radians
+
 	report.frame_count_since_last_readout = f_integral.frame_count_since_last_readout;
+
 	report.ground_distance_m = float(f_integral.ground_distance) / 1000.0f;//convert to meters
+
 	report.quality = f_integral.qual;//0:bad ; 255 max quality
-	report.gyro_x_rate_integral= float(f_integral.gyro_x_rate_integral)/10000.0f;//convert to radians
-	report.gyro_y_rate_integral= float(f_integral.gyro_y_rate_integral)/10000.0f;//convert to radians
-	report.gyro_z_rate_integral= float(f_integral.gyro_z_rate_integral)/10000.0f;//convert to radians
-	report.integration_timespan= f_integral.integration_timespan;//microseconds
+
+	report.gyro_x_rate_integral = float(f_integral.gyro_x_rate_integral) / 10000.0f; //convert to radians
+
+	report.gyro_y_rate_integral = float(f_integral.gyro_y_rate_integral) / 10000.0f; //convert to radians
+
+	report.gyro_z_rate_integral = float(f_integral.gyro_z_rate_integral) / 10000.0f; //convert to radians
+
+	report.integration_timespan = f_integral.integration_timespan; //microseconds
+
 	report.time_since_last_sonar_update = f_integral.time_since_last_sonar_update;//microseconds
+
 	report.sensor_id = 0;
 
 	if (_px4flow_topic < 0) {
 		_px4flow_topic = orb_advertise(ORB_ID(optical_flow), &report);
+
 	} else {
 		/* publish it */
 		orb_publish(ORB_ID(optical_flow), _px4flow_topic, &report);
@@ -547,7 +570,8 @@ int PX4FLOW::collect() {
 	return ret;
 }
 
-void PX4FLOW::start() {
+void PX4FLOW::start()
+{
 	/* reset the report ring and state machine */
 	_collect_phase = false;
 	_reports->flush();
@@ -572,11 +596,13 @@ void PX4FLOW::start() {
 	}
 }
 
-void PX4FLOW::stop() {
+void PX4FLOW::stop()
+{
 	work_cancel(HPWORK, &_work);
 }
 
-void PX4FLOW::cycle_trampoline(void *arg) {
+void PX4FLOW::cycle_trampoline(void *arg)
+{
 	PX4FLOW *dev = (PX4FLOW *) arg;
 
 	dev->cycle();
@@ -598,8 +624,9 @@ PX4FLOW::cycle()
 
 //	static uint64_t deltatime = hrt_absolute_time();
 
-	if (OK != measure())
+	if (OK != measure()) {
 		log("measure error");
+	}
 
 	//usleep(PX4FLOW_CONVERSION_INTERVAL/40);
 
@@ -628,13 +655,14 @@ PX4FLOW::cycle()
 //			_measure_ticks-USEC2TICK(deltatime));
 
 	work_queue(HPWORK, &_work, (worker_t) & PX4FLOW::cycle_trampoline, this,
-			_measure_ticks);
+		   _measure_ticks);
 
 //	deltatime = hrt_absolute_time();
 
 }
 
-void PX4FLOW::print_info() {
+void PX4FLOW::print_info()
+{
 	perf_print_counter(_sample_perf);
 	perf_print_counter(_comms_errors);
 	perf_print_counter(_buffer_overflows);
@@ -645,7 +673,8 @@ void PX4FLOW::print_info() {
 /**
  * Local functions in support of the shell command.
  */
-namespace px4flow {
+namespace px4flow
+{
 
 /* oddly, ERROR is not defined for c++ */
 #ifdef ERROR
@@ -664,7 +693,8 @@ void info();
 /**
  * Start the driver.
  */
-void start() {
+void start()
+{
 	int fd;
 
 	if (g_dev != nullptr) {
@@ -695,7 +725,7 @@ void start() {
 
 	exit(0);
 
-	fail:
+fail:
 
 	if (g_dev != nullptr) {
 		delete g_dev;
@@ -713,6 +743,7 @@ void stop()
 	if (g_dev != nullptr) {
 		delete g_dev;
 		g_dev = nullptr;
+
 	} else {
 		errx(1, "driver not running");
 	}
@@ -725,7 +756,8 @@ void stop()
  * make sure we can collect data from the sensor in polled
  * and automatic modes.
  */
-void test() {
+void test()
+{
 	struct optical_flow_s report;
 	ssize_t sz;
 	int ret;
@@ -750,8 +782,9 @@ void test() {
 	warnx("time:        %lld", report.timestamp);
 
 	/* start the sensor polling at 10Hz */
-	if (OK != ioctl(fd, SENSORIOCSPOLLRATE, 10))	// 2))
+	if (OK != ioctl(fd, SENSORIOCSPOLLRATE, 10)) {	// 2))
 		errx(1, "failed to set 10Hz poll rate");
+	}
 
 	/* read the sensor 5x and report each value */
 	for (unsigned i = 0; i < 10; i++) {
@@ -777,7 +810,7 @@ void test() {
 
 		warnx("framecount_total: %u", f.frame_count);
 		warnx("framecount_integral: %u",
-				f_integral.frame_count_since_last_readout);
+		      f_integral.frame_count_since_last_readout);
 		warnx("pixel_flow_x_integral: %i", f_integral.pixel_flow_x_integral);
 		warnx("pixel_flow_y_integral: %i", f_integral.pixel_flow_y_integral);
 		warnx("gyro_x_rate_integral: %i", f_integral.gyro_x_rate_integral);
@@ -785,9 +818,9 @@ void test() {
 		warnx("gyro_z_rate_integral: %i", f_integral.gyro_z_rate_integral);
 		warnx("integration_timespan [us]: %u", f_integral.integration_timespan);
 		warnx("ground_distance: %0.2f m",
-				(double) f_integral.ground_distance / 1000);
+		      (double) f_integral.ground_distance / 1000);
 		warnx("time since last sonar update [us]: %i",
-				f_integral.time_since_last_sonar_update);
+		      f_integral.time_since_last_sonar_update);
 		warnx("quality integration average : %i", f_integral.qual);
 		warnx("quality : %i", f.qual);
 
@@ -800,7 +833,8 @@ void test() {
 /**
  * Reset the driver.
  */
-void reset() {
+void reset()
+{
 	int fd = open(PX4FLOW_DEVICE_PATH, O_RDONLY);
 
 	if (fd < 0) {
@@ -836,7 +870,8 @@ info()
 
 } // namespace
 
-int px4flow_main(int argc, char *argv[]) {
+int px4flow_main(int argc, char *argv[])
+{
 	/*
 	 * Start/load the driver.
 	 */
