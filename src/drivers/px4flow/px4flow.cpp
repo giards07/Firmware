@@ -73,7 +73,7 @@
 #include <board_config.h>
 
 /* Configuration Constants */
-#define I2C_FLOW_ADDRESS 		0x42 //* 7-bit address. 8-bit address is 0x84
+#define I2C_FLOW_ADDRESS 		0x45 //* 7-bit address. 8-bit address is 0x84
 //range 0x42 - 0x49
 
 /* PX4FLOW Registers addresses */
