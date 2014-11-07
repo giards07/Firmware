@@ -245,6 +245,9 @@ ORB_DECLARE(output_pwm);
 /** setup OVERRIDE_IMMEDIATE behaviour on FMU fail */
 #define PWM_SERVO_SET_OVERRIDE_IMMEDIATE	_IOC(_PWM_SERVO_BASE, 30)
 
+/** setup OVERRIDE_IMMEDIATE behaviour on FMU fail */
+#define PWM_SERVO_SET_OVERRIDE_IMMEDIATE	_IOC(_PWM_SERVO_BASE, 30)
+
 /*
  *
  *
